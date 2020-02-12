@@ -1,0 +1,42 @@
+<html>
+
+<head>
+    <title>Part2</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.46.0/codemirror.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src='https://unpkg.com/@ag-grid-enterprise/all-modules@22.1.2/dist/ag-grid-enterprise.min.js'></script>
+
+    <script src="./js/papaparse.min.js"></script>
+    <script src="./js/sql.js"></script>
+    <script src="./js/strftime-min.js"></script>
+</head>
+
+<body>
+    <div style="display: flex; align-items:center; justify-content: center;">
+        Start:
+        <input type="date" id="daily_s" /> End:
+        <input type="date" id="daily_e" /> DateType:
+        <select>
+            <option value="D">Daily</option>
+            <option value="W">Weekly</option>
+            <option value="M">Monthly</option>
+            <option value="Q">Quaterly</option>
+            <option value="Y">Yearly</option>
+        </select> Property:
+        <select onchange="onPropertyChange(this)">
+            <option value="1">Price</option>
+            <option value="2">Actual</option>
+        </select>
+    </div>
+    <div id="aggrid" class="ag-theme-balham-dark">
+    </div>
+    <script src="./js/database.js "></script>
+    <script src="./js/api_data.js "></script>
+    <script src="./js/agPart.js "></script>
+    <script src="./js/util.js "></script>
+</body>
+
+</html>
