@@ -1,5 +1,6 @@
 function onAnswer() {
-    let res = db.exec(createTempTable("2020-11-20", "2020-11-21", 'D') + "SELECT * FROM temp;");
+    createTempTable("2020-10-20", "2020-12-21", 'M');
+    let res = db.exec(createTempTable("2020-11-20", "2020-11-22", 'D') + "SELECT * FROM temp;");
     let columnDefsTemp = [];
     res[0].columns.map((col, id) => {
         if (col.split("-").length >= 3) {
@@ -10,7 +11,7 @@ function onAnswer() {
                 enablePivot: true,
                 hide: true,
                 enableValue: true,
-                aggFunc: "sum"
+                aggFunc: id % 2 ? "sum" : "avg"
             })
         }
     });
@@ -45,7 +46,7 @@ function createTempTable(startDate, endDate, type) {
                 if (j === 0) {
                     tmp = "(SELECT attribute1, attribute2, attribute3, attribute4, attribute5, attribute6, attribute7, attribute8, attribute9, attribute10, channel1, channel2, channel3, property, date_created, value as '" + getISODate(i) + "', property||attribute1||attribute2||attribute3||attribute4||attribute5||attribute6||attribute7||attribute8||attribute9||attribute10||channel1||channel2||channel3 AS keys" + j + " FROM tree WHERE value_date BETWEEN '" + s_date + "' AND '" + e_date + "')";
                 } else {
-                    tmp = " INNER JOIN (SELECT value as '" + getISODate(i) + "', property||attribute1||attribute2||attribute3||attribute4||attribute5||attribute6||attribute7||attribute8||attribute9||attribute10||channel1||channel2||channel3 AS keys" + j + " FROM tree WHERE value_date BETWEEN '2020-11-21'AND '2020-11-21') ON keys0 = keys" + j;
+                    tmp = " INNER JOIN (SELECT value as '" + getISODate(i) + "', property||attribute1||attribute2||attribute3||attribute4||attribute5||attribute6||attribute7||attribute8||attribute9||attribute10||channel1||channel2||channel3 AS keys" + j + " FROM tree WHERE value_date BETWEEN '" + s_date + "' AND '" + e_date + "') ON keys0 = keys" + j;
                 }
 
                 selectSql.push(tmp);
@@ -56,10 +57,18 @@ function createTempTable(startDate, endDate, type) {
         case 'W':
             start = strftime("%Y-%w", asDate(startDate));
             end = strftime("%Y-%w", asDate(endDate));
+
             break;
         case 'M':
             start = strftime("%Y-%m", asDate(startDate));
             end = strftime("%Y-%m", asDate(endDate));
+            s_date = calDateRange("M", start).start;
+            e_date = calDateRange("M", end).end;
+
+            for (let i = new Date(start); i <= new Date(end); i.setMonth(i.getMonth() + 1)) {
+                console.log(strftime("%Y-%m", asDate(getISODate(i))));
+            }
+
             break;
         case 'Q':
             break;
@@ -70,20 +79,20 @@ function createTempTable(startDate, endDate, type) {
     }
     //  + additional_field.join(" text,") + " text);"
     sql += additional_field_date_float.join(" float,") + " float);" + " INSERT INTO temp SELECT attribute1, attribute2, attribute3, attribute4, attribute5, attribute6, attribute7, attribute8, attribute9, attribute10, channel1, channel2, channel3, property, date_created, " + additional_field_date_float.join(",") + " FROM " + selectSql.join("") + ";";
-    console.log(sql);
+    // console.log(sql);
     return sql;
 }
 
-function calDateRange(type, start, end) {
+function calDateRange(type, start) {
     let result = {};
     switch (type) {
         case 'D':
             result['start'] = start;
-            result['end'] = end;
+            result['end'] = start;
             break;
         case 'M':
             result['start'] = start + "-" + "01";
-            result['end'] = end + "-" + "31";
+            result['end'] = start + "-" + "31";
             break;
         case 'Q':
             let year = start.slice(4);
@@ -93,7 +102,7 @@ function calDateRange(type, start, end) {
             break;
         case 'Y':
             result['start'] = start + "-01-01";
-            result['end'] = end + "-12-31";
+            result['end'] = start + "-12-31";
             break;
         default:
             break;

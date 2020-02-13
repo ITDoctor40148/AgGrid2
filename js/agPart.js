@@ -118,6 +118,7 @@ var gridOptions = {
     maxBlocksInCache: 2,
     purgeClosedRowNodes: true,
     property: "",
+    paginationPageSize: 10,
     onFirstDataRendered: function(params) {
         params.api.sizeColumnsToFit();
     }
@@ -149,10 +150,11 @@ class FakeServer {
             tableTree.push(temp);
         });
         // })
-        const rowCount = this.getRowCount(request, results);
+        const rowCount = this.getRowCount(request, tableTree);
+        console.log(rowCount);
         const resultsForPage = this.cutResultsToPageSize(request, tableTree);
 
-        resultsCallback(tableTree, tableTree.length);
+        resultsCallback(resultsForPage, rowCount);
     }
 
     buildSql(request) {
@@ -361,6 +363,7 @@ class FakeServer {
         const endRow = request.endRow;
         const pageSize = endRow - startRow;
         return ' LIMIT ' + (pageSize + 1) + ' offset ' + startRow;
+        // return "";
     }
 
     getRowCount(request, results) {
@@ -368,13 +371,15 @@ class FakeServer {
             return null;
         }
         const currentLastRow = request.startRow + results.length;
+        // return results.length <= request.endRow ? results.length : -1;
         return currentLastRow <= request.endRow ? currentLastRow : -1;
     }
 
     cutResultsToPageSize(request, results) {
         const pageSize = request.endRow - request.startRow;
         if (results && results.length > pageSize) {
-            return results.splice(0, pageSize);
+            // results.splice(0, pageSize);
+            return results.slice(0, pageSize);
         } else {
             return results;
         }
@@ -387,7 +392,7 @@ class ServerSideDataSource {
         this.option = option;
     }
     getRows(params) {
-        // console.log('ServerSideDatasource.getRows: params = ', params);
+        console.log('ServerSideDatasource.getRows: params = ', params);
         // let rowGroupCols = params.request.rowGroupCols;
         // rowGroupCols.push({ id: "value_date", aggFunc: undefined, displayName: "value_date", field: "value_date" });
         params.request["additional"] = {};
