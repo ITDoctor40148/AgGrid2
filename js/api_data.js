@@ -1,8 +1,10 @@
 function onAnswer() {
-    createTempTable("2020-10-20", "2020-12-21", 'M');
-    let res = db.exec(createTempTable("2020-11-20", "2020-11-22", 'D') + "SELECT * FROM temp;");
+    // createTempTable("2020-10-20", "2020-12-21", 'M');
+    let res = db.exec(createTempTable("2020-11-20", "2020-11-21", 'D') + " SELECT * FROM temp;");
     let columnDefsTemp = [];
+    console.log("S1");
     res[0].columns.map((col, id) => {
+        console.log("S2");
         if (col.split("-").length >= 3) {
             columnDefsTemp.push({
                 headerName: col,
@@ -18,6 +20,7 @@ function onAnswer() {
     // gridOptions.columnDefs = columnDefs;
     // gridOptions.startDate = "2020-11-20";
     // gridOptions.endDate = "2020-11-21";
+    console.log("S3");
     // gridOptions.dateType = "D";
     gridOptions.api.setColumnDefs([...columnDefs, ...columnDefsTemp]);
 }
@@ -78,8 +81,8 @@ function createTempTable(startDate, endDate, type) {
             break;
     }
     //  + additional_field.join(" text,") + " text);"
-    sql += additional_field_date_float.join(" float,") + " float);" + " INSERT INTO temp SELECT attribute1, attribute2, attribute3, attribute4, attribute5, attribute6, attribute7, attribute8, attribute9, attribute10, channel1, channel2, channel3, property, date_created, " + additional_field_date_float.join(",") + " FROM " + selectSql.join("") + ";";
-    // console.log(sql);
+    sql += additional_field_date_float.join(" float,") + " float);" + " BEGIN TRANSACTION; INSERT INTO temp SELECT attribute1, attribute2, attribute3, attribute4, attribute5, attribute6, attribute7, attribute8, attribute9, attribute10, channel1, channel2, channel3, property, date_created, " + additional_field_date_float.join(",") + " FROM " + selectSql.join("") + ";COMMIT;";
+    console.log(sql);
     return sql;
 }
 
