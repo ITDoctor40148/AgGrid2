@@ -1,35 +1,3 @@
-function onAnswer() {
-    // createTempTable("2020-10-20", "2020-12-21", 'M');
-    let res = db.exec(createTempTable("2020-11-20", "2020-11-21", 'D') + " SELECT * FROM temp;");
-    let columnDefsTemp = [];
-    console.log("S1");
-    res[0].columns.map((col, id) => {
-        console.log("S2");
-        if (col.split("-").length >= 3) {
-            columnDefsTemp.push({
-                headerName: col,
-                field: col,
-                enableRowGroup: true,
-                enablePivot: true,
-                hide: true,
-                enableValue: true,
-                aggFunc: id % 2 ? "sum" : "avg"
-            })
-        }
-    });
-    // gridOptions.columnDefs = columnDefs;
-    // gridOptions.startDate = "2020-11-20";
-    // gridOptions.endDate = "2020-11-21";
-    console.log("S3");
-    // gridOptions.dateType = "D";
-    gridOptions.api.setColumnDefs([...columnDefs, ...columnDefsTemp]);
-}
-
-function onPropertyChange(obj) {
-    gridOptions.property = obj.value;
-    gridOptions.api.onFilterChanged();
-}
-
 function createTempTable(startDate, endDate, type) {
     let sql = "DROP TABLE IF EXISTS temp; CREATE TABLE temp (attribute1 INTEGER,attribute2 INTEGER,attribute3 INTEGER,attribute4 INTEGER,attribute5 INTEGER,attribute6 INTEGER,attribute7 INTEGER,attribute8 INTEGER,attribute9 INTEGER,attribute10 INTEGER,channel1 INTEGER,channel2 INTEGER,channel3 INTEGER,property INTEGER, date_created text,";
     let additional_field_date_float = [];
@@ -82,7 +50,7 @@ function createTempTable(startDate, endDate, type) {
     }
     //  + additional_field.join(" text,") + " text);"
     sql += additional_field_date_float.join(" float,") + " float);" + " BEGIN TRANSACTION; INSERT INTO temp SELECT attribute1, attribute2, attribute3, attribute4, attribute5, attribute6, attribute7, attribute8, attribute9, attribute10, channel1, channel2, channel3, property, date_created, " + additional_field_date_float.join(",") + " FROM " + selectSql.join("") + ";COMMIT;";
-    console.log(sql);
+    // console.log(sql);
     return sql;
 }
 
@@ -154,22 +122,6 @@ function asDate(dateAsString) {
     return new Date(splitFields[0], splitFields[1] - 1, splitFields[2]);
 }
 
-function getChannelString(channel_num, value_index) {
-
-}
-
-function getPropertyString(value_string) {
-
-}
-
-function getAttributeString(attribute_num, value_index) {
-
-}
-
-function decrypt() {
-
-}
-
 // get string value from int val and codetype
 function getStringVal(codeType, intVal) {
     if ((codeType.slice(0, codeType.length - 1) == "attribute") || (codeType.slice(0, codeType.length - 1) == "channel")) {
@@ -193,4 +145,118 @@ function getIntVal(codeType, stringVal) {
         }
     }
     return -2;
+}
+
+function calNewCols() {
+    columnDefs = columnDefs.slice(0, 14);
+    switch (gridOptions.dateType) {
+        case 'D':
+            for (let i = new Date(gridOptions.datesS); i <= new Date(gridOptions.datesE); i.setDate(i.getDate() + 1)) {
+                columnDefs.push({
+                    headerName: getISODate(i),
+                    field: getISODate(i),
+                    hide: false,
+                    aggFunc: properties[0].values[propSelect.value - 1][2],
+                    enableValue: true
+                });
+            }
+            break;
+        case 'W':
+            for (let i = new Date(gridOptions.datesS); i <= new Date(gridOptions.datesE); i.setDate(i.getDate() + 7)) {
+                columnDefs.push({
+                    headerName: getISODate(i),
+                    field: getISODate(i),
+                    hide: false,
+                    aggFunc: properties[0].values[propSelect.value - 1][2],
+                    enableValue: true
+                });
+            }
+            break;
+        case 'M':
+            for (let i = new Date(gridOptions.datesS); i <= new Date(gridOptions.datesE); i.setMonth(i.getMonth() + 1)) {
+                console.log(i);
+                let tmp = getISODate(i).split("-");
+                columnDefs.push({
+                    headerName: tmp[0] + "-" + tmp[1],
+                    field: tmp[0] + "-" + tmp[1],
+                    hide: false,
+                    aggFunc: properties[0].values[propSelect.value - 1][2],
+                    enableValue: true
+                });
+            }
+            break;
+        case 'Q':
+            for (let i = new Date(gridOptions.datesS), index = 0; i < new Date(gridOptions.datesE); i.setMonth(i.getMonth() + 3), index++) {
+                let tmp = getISODate(i).split("-");
+                let quater = parseInt((parseInt(tmp[1]) + 2) / 3);
+                columnDefs.push({
+                    headerName: tmp[0] + "-0" + quater,
+                    field: tmp[0] + "-0" + quater,
+                    hide: false,
+                    aggFunc: properties[0].values[propSelect.value - 1][2],
+                    enableValue: true
+                });
+            }
+            break;
+        case 'Y':
+            for (let i = new Date(gridOptions.datesS); i <= new Date(gridOptions.datesE); i.setFullYear(i.getFullYear() + 1)) {
+                let tmp = getISODate(i).split("-");
+                columnDefs.push({
+                    headerName: tmp[0],
+                    field: tmp[0],
+                    hide: false,
+                    aggFunc: properties[0].values[propSelect.value - 1][2],
+                    enableValue: true
+                });
+            }
+            break;
+        default:
+            break;
+    }
+    // console.log(columnDefs);
+    gridOptions.api.setColumnDefs(columnDefs);
+}
+
+function extractDateType(cols) {
+    return cols.filter(value => {
+        return !isNaN(parseInt(value.colDef.headerName.slice(0, 4)));
+    }).map(item => {
+        return item.colDef.headerName;
+    });
+}
+
+function calDatesFromCol(date, type, isStart = true) {
+    switch (type) {
+        case 'D':
+            return date;
+        case 'W':
+            return calStartEndOfWeek(date, isStart);
+        case 'M':
+            return calStartEndOfMonth(date, isStart);
+        case 'Q':
+            return calStartEndOfQuater(date, isStart);
+        case 'Y':
+            return isStart ? date.slice(0, 4) + "-01-01" : date.slice(0, 4) + "-12-31";
+        default:
+            return "";
+    }
+}
+
+function calStartEndOfMonth(date, isStart = true) {
+    let tmp = date.split("-");
+    return !isStart ? getISODate(new Date(parseInt(tmp[0]), parseInt(tmp[1]), 0)) : getISODate(new Date(parseInt(tmp[0]), parseInt(tmp[1]) - 1, 1));
+}
+
+function calStartEndOfQuater(date, isStart = true) {
+    let tmp = date.split("-");
+    let quater = Math.floor((parseInt(tmp[1]) + 2) / 3);
+    return !isStart ? getISODate(new Date(parseInt(tmp[0]), quater * 3, 0)) : getISODate(new Date(parseInt(tmp[0]), quater * 3 - 3, 1));
+}
+
+function calStartEndOfWeek(date, isStart = true) {
+    let tmp = date.split("-");
+    let curr = new Date(date);
+    let first = curr.getDate() - curr.getDay();
+    var last = first + 6;
+    return isStart ? getISODate(new Date(tmp[0], parseInt(tmp[1]) - 1, first)) : getISODate(new Date(tmp[0], parseInt(tmp[1]) - 1, last));
 }

@@ -19,17 +19,14 @@
         Start:
         <input type="date" id="daily_s" /> End:
         <input type="date" id="daily_e" /> DateType:
-        <select>
+        <select id="typeDate">
             <option value="D">Daily</option>
             <option value="W">Weekly</option>
             <option value="M">Monthly</option>
             <option value="Q">Quaterly</option>
             <option value="Y">Yearly</option>
         </select> Property:
-        <select onchange="onPropertyChange(this)">
-            <option value="1">Price</option>
-            <option value="2">Actual</option>
-        </select>
+        <select id="property"></select>
     </div>
     <div id="aggrid" class="ag-theme-balham-dark">
     </div>
